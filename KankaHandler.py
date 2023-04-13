@@ -17,11 +17,34 @@ class KankaHandler:
     endpoints = ['characters', 'locations', 'families', 'organisations', 'items',
                  'notes', 'events', 'creatures', 'races', 'maps']
 
+    def set_endpoints(endpoints):
+        '''
+        Setter function to change the locally tracked endpoints. Use this to
+        change what parts of your Kanka Wiki you want to have locally tracked.
+        It is possible to change this on the run if you want to inspect
+        subsections of your wiki in detail.
+
+        Inputs:
+            
+            endpoints: a list of strings containing the endpoints you wish to
+            track
+        '''
+        self.endpoints = endpoints
+
     def kanka_get(self, query):
         '''
         This function issues a GET request to Kanka given the query. It
         supports both full http urls as well as local query inside the
         campaign.
+
+        This method automatically listens for a 429 response from the server
+        and throttles itself in that instance. This will lead to considerable
+        wait time if this function is called frequently.
+
+        Inputs:
+
+            query: a string either containing the local endpoint as seen on the
+            Kanka api doc or a full api url.
         '''
         if not "https://" in query:
             query = self.stem + self.campaign + query
@@ -46,6 +69,14 @@ class KankaHandler:
         '''
         For a given endpoint fetch all entries from Kanka that have been
         updated since the last fetch.
+
+        Inputs:
+
+            endpoint: a string containing the category of entries you wish to
+            retrieve e.g. 'characters'
+
+            force: If this is set to true all entries are redownloaded even if
+            no changes have occured since the last fetch.
         '''
         # Make sure this endpoint has already been set up
         epp = self.get_endpoint_path(endpoint)
@@ -94,6 +125,19 @@ class KankaHandler:
             f.write(json.dumps(index))
 
     def get_posts(self, entity):
+        '''
+        Internal function which if given an entry will fetch all posts attached
+        to the passed entity.
+
+        Inputs:
+
+            entity: a python dictionary containing an entities data as they are
+            used throughout this code
+
+        Returns:
+
+            The input entity with the posts inserted into the dict at 'posts'
+        '''
         query = 'entities/' + str(entity['entity_id']) + '/posts'
         entity['posts'] = self.kanka_get(query)['data']
         return entity
@@ -101,6 +145,11 @@ class KankaHandler:
     def kanka_sync(self, force=False):
         '''
         This function syncs all endpoints in self.endpoints at once.
+
+        Inputs:
+
+            force: if set to True this will download all remote entities even
+            if they have not been updated since the last fetch
         '''
         for e in self.endpoints:
             self.kanka_sync_endpoint(e, force=force)
@@ -110,6 +159,11 @@ class KankaHandler:
         This method should go through the local json files and generate a new
         field, which contains a list of mentions inside the entitys entry or
         posts.
+
+        Inputs:
+
+            force if set to True this method will generate mentions even for
+            entries that already contain 'my_mention' attribute
         '''
         # Iterate over tracked endpoints
         for endpoint in self.endpoints:
@@ -138,6 +192,16 @@ class KankaHandler:
                     f.write(json.dumps(entity, indent = 4))
 
     def generate_adjecency_list(self):
+        '''
+        This method generates an adjacency list of entity names for the tracked
+        endpoints.
+
+        Returns:
+
+            a dictionary of lists where each dictionary key is a entity name
+            and each dictionary value is a list of entity names mentioned in
+            the keys entry and posts.
+        '''
         self.generate_mentions()
 
         index = self.get_index()
@@ -158,6 +222,10 @@ class KankaHandler:
     def get_index(self):
         '''
         construct a dictionary for each entpoint mapping ids to names
+
+        Returns:
+            
+            a dictionary mapping entity IDs to their names.
         '''
         index = {}
         for endpoint in self.endpoints:
@@ -167,10 +235,17 @@ class KankaHandler:
         return index
 
     def get_endpoint_path(self, endpoint):
+        '''
+        Function to generate endpoint path from enpoint name
+        '''
         return self.path_stem / 'campaign' / endpoint
 
 
     def iter_entities_endpoint(self, endpoint):
+        '''
+        Generator function that will yield all entries locally stored at a
+        given endpoint
+        '''
         epp = self.path_stem / 'campaign' / endpoint
         for file in epp.glob('*.json'):
             with file.open(mode='r') as f:
@@ -178,6 +253,9 @@ class KankaHandler:
             yield entity
 
     def iter_entities(self):
+        '''
+        Generator function that yields all locally tracked entities.
+        '''
         for endpoint in self.endpoints:
             epp = self.path_stem / 'campaign' / endpoint
             for file in epp.glob('*.json'):
@@ -187,5 +265,9 @@ class KankaHandler:
 
 
 def parse_mention(mention):
+    '''
+    helperfunction that takes a string like '[character:3618246' and returns a
+    tuple containing the catefory and entity ID seperatly.
+    '''
     split = mention[1:].split(':')
     return split[0], int(split[1])
