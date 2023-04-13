@@ -30,3 +30,9 @@ To use the Kanka API this tool needs a oAuth token that you can generate in your
 > You should see a pop up window like this with a wall of text.
 > Copy this text into a file called `key.txt` in the same subdirectory as you keep `KankaHandler.py`.
 > This is important as this is where the tool will get the key from!
+
+# Documentations
+
+> [KankaHandler](resources/KankaHandler.md)
+
+
