@@ -12,7 +12,7 @@ To use the Kanka API this tool needs a oAuth token that you can generate in your
 >
 > Scroll all the way down to find the settings
 
-> ![API menu option](resource/api.png)
+> ![API menu option](resources/api.png)
 >
 > Navigate to the API subsettings
 
