@@ -3,8 +3,7 @@ import KankaHandler
 from igraph import plot
 
 H = KankaHandler.KankaHandler()
-#    H.endpoints = ['characters', 'events', 'items', 'locations', 'notes',
-#                   'organisations']
+#H.endpoints = ['characters', 'events', 'items', 'locations', 'notes']
 H.kanka_sync()
 
 G = Grapher.Grapher(H.generate_adjecency_list())
