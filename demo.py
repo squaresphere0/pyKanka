@@ -1,12 +1,12 @@
-import Grapher
-import KankaHandler
+from pyKanka.Grapher import Grapher
+from pyKanka.KankaHandler import KankaHandler
 from igraph import plot
 
-H = KankaHandler.KankaHandler()
+H = KankaHandler()
 #H.endpoints = ['characters', 'events', 'items', 'locations', 'notes']
 H.kanka_sync()
 
-G = Grapher.Grapher(H.generate_adjecency_list())
+G = Grapher(H.generate_adjecency_list())
 components = G.graph.connected_components(mode='strong')
 
 # List of entries in a connected component
