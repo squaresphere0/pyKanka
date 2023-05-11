@@ -17,7 +17,13 @@ class KankaHandler:
     endpoints = ['characters', 'locations', 'families', 'organisations', 'items',
                  'notes', 'events', 'creatures', 'races', 'maps']
 
-    def set_endpoints(endpoints):
+    def set_campaign(self, campaign_id):
+        '''
+        Change which Kanka campaign is being tracked by ID.
+        '''
+        self.campaign = "campaigns/" + str(campaign_id)
+
+    def set_endpoints(self, endpoints):
         '''
         Setter function to change the locally tracked endpoints. Use this to
         change what parts of your Kanka Wiki you want to have locally tracked.
@@ -25,7 +31,7 @@ class KankaHandler:
         subsections of your wiki in detail.
 
         Inputs:
-            
+
             endpoints: a list of strings containing the endpoints you wish to
             track
         '''
@@ -217,6 +223,18 @@ class KankaHandler:
                 except:
                     pass
         return graph
+
+
+    def generate_index(self):
+        '''
+        generate a global index file for all entities.
+        '''
+        index = {}
+        for endpoint in self.endpoints:
+            for entity in self.iter_entities_endpoint(endpoint):
+                index[entity['entity_id']] = (endpoint, entity['name'])
+        with (self.path_stem / '_INDEX').open(mode='w') as f:
+            f.write(json.dumps(index, indent = 4))
 
 
     def get_index(self):
