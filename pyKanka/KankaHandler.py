@@ -225,6 +225,18 @@ class KankaHandler:
         return graph
 
 
+    def generate_index(self):
+        '''
+        generate a global index file for all entities.
+        '''
+        index = {}
+        for endpoint in self.endpoints:
+            for entity in self.iter_entities_endpoint(endpoint):
+                index[entity['entity_id']] = (endpoint, entity['name'])
+        with (self.path_stem / '_INDEX').open(mode='w') as f:
+            f.write(json.dumps(index, indent = 4))
+
+
     def get_index(self):
         '''
         construct a dictionary for each entpoint mapping ids to names
