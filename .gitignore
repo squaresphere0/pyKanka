@@ -4,6 +4,7 @@ campaign/
 pyKanka.egg-info/
 
 key.txt
+.DS_Store
 
 *.svg
 *~
