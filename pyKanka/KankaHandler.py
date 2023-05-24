@@ -2,6 +2,7 @@ import time
 import requests
 import json
 import re
+import os
 from pathlib import Path
 
 class KankaHandler:
@@ -67,7 +68,7 @@ class KankaHandler:
                 print('waiting...')
                 time.sleep(60)
                 return self.kanka_get(query)
- 
+
         # if all ok we return the json
         return response.json()
 
@@ -225,7 +226,7 @@ class KankaHandler:
         return graph
 
 
-    def generate_index(self):
+    def generate_global_index(self):
         '''
         generate a global index file for all entities.
         '''
@@ -235,6 +236,8 @@ class KankaHandler:
                 index[entity['entity_id']] = (endpoint, entity['name'])
         with (self.path_stem / '_INDEX').open(mode='w') as f:
             f.write(json.dumps(index, indent = 4))
+
+        return index
 
 
     def get_index(self):
@@ -281,6 +284,39 @@ class KankaHandler:
                     entity = json.loads(f.read())
                 yield entity
 
+    def kanka_cleanup(self):
+        '''
+        Method checks for entries that have been remotely deleted and also
+        deletes them locally.
+        '''
+        fetch_request = 'entities'
+
+        # Fetch updated entries from Kanka
+        resp = self.kanka_get(fetch_request)
+
+        entities = resp['data']
+        link = resp['links']['next']
+        while link != None:
+            resp = self.kanka_get(link)
+            entities += resp['data']
+            link = resp['links']['next']
+
+        # extract entity_id name pairs
+        remote_names = { e['id']:e['name'] for e in entities}
+
+        # get local pairs
+        local_names = self.generate_global_index()
+
+        # iterate over all local keys
+        for e_id in local_names.keys():
+            if e_id in remote_names:
+                if local_names[e_id][1] == remote_names[e_id]:
+                    continue
+            print(local_names[e_id])
+            os.remove(self.path_stem / 'campaign' / local_names[e_id][0] /
+                      (local_names[e_id][1] + '.json'))
+
+
 
 def parse_mention(mention):
     '''
@@ -289,3 +325,4 @@ def parse_mention(mention):
     '''
     split = mention[1:].split(':')
     return split[0], int(split[1])
+
